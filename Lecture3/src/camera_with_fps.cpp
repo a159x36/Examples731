@@ -227,17 +227,20 @@ Mat_<uint8_t> zc(Mat_<int16_t> im) {
 
 int main(int argc, char** argv) {
     (void)argv[argc - 1];
-    bool COLOUR=false;
+    bool COLOUR=true;
+    bool has_camera=true;
     VideoCapture cap;
     Mat_<Vec3b> frame;
     cap.open(0);
     if (!cap.isOpened()) {
-        cout << "Failed to open camera" << endl;
-        return 0;
-    }
+        cout << "Failed to open camera, using static image" << endl;
+        frame=imread("../../baboon.jpg");
+        has_camera=false;
+    } else
     cout << "Opened camera" << endl;
     namedWindow("Original", WINDOW_NORMAL);
     namedWindow("Processed", WINDOW_NORMAL);
+    if(has_camera) {
     cap.set(CAP_PROP_FRAME_WIDTH, 640);
     //   cap.set(CAP_PROP_FRAME_WIDTH, 960);
     //   cap.set(CAP_PROP_FRAME_WIDTH, 1600);
@@ -245,8 +248,9 @@ int main(int argc, char** argv) {
     //   cap.set(CAP_PROP_FRAME_HEIGHT, 720);
     //   cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
     cap >> frame;
+    }
     Mat_<uint8_t> grey(frame.rows,frame.cols);
-    Mat_<uint8_t> grey1(frame.rows,frame.cols);
+    Mat_<Vec3b> colour(frame.rows,frame.cols);
     Mat_<int16_t> lap(frame.rows,frame.cols);
     printf("frame size %d %d\n", frame.rows, frame.cols);
     resizeWindow("Original",frame.cols,frame.rows);
@@ -257,7 +261,8 @@ int main(int argc, char** argv) {
     Menu m=Menu("Menu",vector<string>({"Negative", "Threshold", "Stretch", "Enhance", "Sobel", "Equalize", "CLAHE", "Edges", "Rotate", "Exit"}));
     while (1) {
         system_clock::time_point start = system_clock::now();
-        cap >> frame;
+        if(has_camera)
+          cap >> frame;
         if (frame.empty()) break;
         ostringstream ss;
         ss<<setw(4)<<setprecision(4)<<setfill('0')<<fps<<"fps";
@@ -268,8 +273,8 @@ int main(int argc, char** argv) {
                 Vec3i(0, 0, 255), 2, 8);
         Mat channels[3];
         if(COLOUR) {
-            cvtColor(frame,frame,COLOR_BGR2HSV);    
-            split(frame,channels);
+            cvtColor(frame,colour,COLOR_BGR2HSV);    
+            split(colour,channels);
             grey=channels[2];
         } else cvtColor(frame,grey,COLOR_BGR2GRAY);
 
@@ -290,9 +295,9 @@ int main(int argc, char** argv) {
         if(selection=="Rotate") warpAffine(grey,grey,getRotationMatrix2D(Point(grey.cols/2,grey.rows/2),-30,1),grey.size());
         if(COLOUR) {
             channels[2]=grey;
-            merge(channels,3,frame);
-            cvtColor(frame,frame,COLOR_HSV2BGR);
-            imshow("Processed", frame);
+            merge(channels,3,colour);
+            cvtColor(colour,colour,COLOR_HSV2BGR);
+            imshow("Processed", colour);
         } else {
             imshow("Processed", grey);
         }
