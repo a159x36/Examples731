@@ -10,7 +10,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Find OpenCV
 #########################################################
 
-find_package(OpenCV REQUIRED)
+find_package(OpenCV 4.0.0 REQUIRED)
 
 #########################################################
 # Include directories
