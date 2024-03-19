@@ -70,6 +70,10 @@ class Menu {
     }
 };
 
+void gaussian(Mat_<uint8_t> im) {
+  GaussianBlur(im,im,Size(0,0),4.0);
+}
+
 void laplacian(Mat_<uint8_t> im) {
   Mat_<int16_t>lap(im.rows,im.cols);
   Laplacian(im,lap,CV_16S,7,0.1,128);
@@ -149,10 +153,10 @@ void dowatershed(Mat_<Vec3b> im, Mat_<uint8_t> grey) {
   Mat_<int> markers(grey.rows,grey.cols);
   vector<vector<Point> > contours;
   vector<Vec4i> hierarchy;
-  threshold(grey,grey,128,255,THRESH_BINARY);
+  threshold(grey,grey,128,255,THRESH_OTSU);
   findContours(grey,contours,hierarchy,RETR_CCOMP,CHAIN_APPROX_SIMPLE);
   int components=0, idx=0;
-  markers=0;
+  markers=-1;
   for( ; idx >= 0; idx = hierarchy[idx][0], components++ ) {
     drawContours(markers,contours,idx,components,-1,8,hierarchy);
   }
@@ -175,7 +179,7 @@ void dowatershed(Mat_<Vec3b> im, Mat_<uint8_t> grey) {
 
 int main(int argc, char** argv) {
     (void)argv[argc - 1];
-    bool COLOUR=true;
+    bool COLOUR=false;
     bool has_camera=true;
     VideoCapture cap;
     Mat_<Vec3b> frame,image;
@@ -206,7 +210,7 @@ int main(int argc, char** argv) {
     resizeWindow("Processed",frame.cols,frame.rows);
     int key = 0;
     float fps = 0.0;
-    Menu m=Menu("Menu",vector<string>({"Laplacian","Canny", "Hough Lines", "Hough Segments", "Hough Circles", "Contours", "Hierarchy", "Watershed", "Exit"}));
+    Menu m=Menu("Menu",vector<string>({"Gaussian","Laplacian","Canny", "Hough Lines", "Hough Segments", "Hough Circles", "Contours", "Hierarchy", "Watershed", "Exit"}));
     while (1) {
         system_clock::time_point start = system_clock::now();
         if(has_camera)
@@ -229,6 +233,7 @@ int main(int argc, char** argv) {
 
       
         string selection=m.getselected();
+        if(selection=="Gaussian") gaussian(grey);
         if(selection=="Laplacian") laplacian(grey);
         if(selection=="Hough Lines") hough_lines(frame);
         if(selection=="Hough Segments") hough_prob(frame);
