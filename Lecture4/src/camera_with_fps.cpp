@@ -70,19 +70,20 @@ class Menu {
     }
 };
 
+int p1,p2;
 void gaussian(Mat_<uint8_t> im) {
-  GaussianBlur(im,im,Size(0,0),4.0);
+  GaussianBlur(im,im,Size(0,0),8.0);
 }
 
 void laplacian(Mat_<uint8_t> im) {
   Mat_<int16_t>lap(im.rows,im.cols);
-  Laplacian(im,lap,CV_16S,7,0.1,128);
+  Laplacian(im,lap,CV_16S,7,0.02,128);
   convertScaleAbs(lap,im);
 }
 
 void hough_lines(Mat_<Vec3b> im) {
   Mat_<uint8_t> proc(im.rows,im.cols);
-  Canny(im,proc,1,100);    
+  Canny(im,proc,50,100);    
   vector<Vec2f> lines;
   HoughLines(proc,lines,1,CV_PI/180,150);
   for(size_t i=0;i<lines.size();i++) {
@@ -125,7 +126,7 @@ void hough_circles(Mat_<Vec3b> im, Mat_<uint8_t> grey) {
 
 void contours(Mat_<Vec3b> im, Mat_<uint8_t> grey) {
   vector<vector<Point> > contours;
-  threshold(grey,grey,128,255,THRESH_BINARY);
+  threshold(grey,grey,128,255,THRESH_OTSU);
   findContours(grey,contours,RETR_TREE,CHAIN_APPROX_SIMPLE);
   drawContours(im,contours,-1,Scalar(0,255,0));
 }
@@ -138,7 +139,7 @@ void hierarchy(Mat_<Vec3b> im, Mat_<uint8_t> grey) {
   vector<vector<Point> > contours;
   vector<Vec4i> hierarchy;
   threshold(grey,grey,128,255,THRESH_BINARY);
-  findContours(grey,contours,hierarchy,RETR_CCOMP,CHAIN_APPROX_SIMPLE);
+  findContours(grey,contours,hierarchy,RETR_TREE,CHAIN_APPROX_SIMPLE);
   int components=0, idx=0;
   Mat_<Vec3b> im1(im.rows,im.cols);
   im1=0;
@@ -193,6 +194,10 @@ int main(int argc, char** argv) {
     cout << "Opened camera" << endl;
     namedWindow("Original", WINDOW_NORMAL);
     namedWindow("Processed", WINDOW_NORMAL);
+    namedWindow("Parameters",WINDOW_AUTOSIZE);
+    createTrackbar("Param1","Parameters",&p1,255);
+    createTrackbar("Param2","Parameters",&p2,255);
+    resizeWindow("Parameters",512,128);
     if(has_camera) {
       cap.set(CAP_PROP_FRAME_WIDTH, 640);
       //   cap.set(CAP_PROP_FRAME_WIDTH, 960);
@@ -241,7 +246,7 @@ int main(int argc, char** argv) {
         if(selection=="Contours") contours(frame,grey);
         if(selection=="Hierarchy") hierarchy(frame,grey);
         if(selection=="Watershed") dowatershed(frame,grey);
-        if(selection=="Canny") Canny(frame,grey,1,100);
+        if(selection=="Canny") Canny(frame,grey,p1,p2);
         imshow("Original",frame);
         if(COLOUR) {
             channels[2]=grey;
