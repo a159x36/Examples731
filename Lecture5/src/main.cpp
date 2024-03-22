@@ -98,13 +98,13 @@ void hdr_process(string normalname, string undername,string overname) {
     //vector<Mat> aligned;
     //align_mtb->process(images,images);
 
-    Ptr<SIFT> orb=SIFT::create(5000);
+    Ptr<Feature2D> featuredetector=SIFT::create(5000);
     Ptr<DescriptorMatcher> bfm=BFMatcher::create(NORM_L2,true);
     Mat desc0, desc1, desc2;
     vector<KeyPoint> keypoints0,keypoints1,keypoints2;
-    orb->detectAndCompute(images[0],noArray(),keypoints0,desc0);
-    orb->detectAndCompute(images[1],noArray(),keypoints1,desc1);
-    orb->detectAndCompute(images[2],noArray(),keypoints2,desc2);
+    featuredetector->detectAndCompute(images[0],noArray(),keypoints0,desc0);
+    featuredetector->detectAndCompute(images[1],noArray(),keypoints1,desc1);
+    featuredetector->detectAndCompute(images[2],noArray(),keypoints2,desc2);
     vector<DMatch> dm;
     bfm->match(desc1,desc0,dm);
     vector<Point2f> kpq,kpt;
@@ -144,9 +144,21 @@ void hdr_process(string normalname, string undername,string overname) {
    
     Ptr<MergeMertens> merge_mer=createMergeMertens();
     merge_mer->process(images,merged);
+// Simple Tonemapping
+//    Ptr<Tonemap> tone=createTonemap(0.6);
+//    tone->process(merged,toned);
 
-    Ptr<Tonemap> tone=createTonemap(0.6);
-    tone->process(merged,toned);
+    Ptr<CLAHE> clahe=createCLAHE(1.0,Size(4,4));
+    Mat_<Vec3f> hsv;
+    Mat_<float> channels[3];
+    cvtColor(merged,hsv,COLOR_BGR2HSV);    
+    split(hsv,channels);
+    Mat grey;
+    channels[2].convertTo(grey,CV_16UC1,65535.0,0);
+    clahe->apply(grey,grey);
+    grey.convertTo(channels[2],CV_32FC1,1/65535.0,0);
+    merge(channels,3,toned);
+    cvtColor(toned,toned,COLOR_HSV2BGR);
 
     showinwindow("Merged",merged);
     showinwindow("Toned",toned);
