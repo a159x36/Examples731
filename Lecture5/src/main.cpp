@@ -132,6 +132,16 @@ void hdr_process(string normalname, string undername,string overname) {
     showinwindow("Under",under);
     showinwindow("Over",over);
     showinwindow("Normal",normal);
+    Mat stacked;
+    vconcat(images[2],normal,stacked);
+    for(int j=0;j<kpq1.size();j++) {
+        double err=-1;
+        Point2f offset=Point2f(0,stacked.rows/2);
+        Scalar col(0,0,255);
+        line(stacked,kpq1[j],kpt1[j]+offset,col);
+    }
+    showinwindow("Features",stacked);
+
 
     images={normal,warped1,warped2};
     
