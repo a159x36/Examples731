@@ -74,7 +74,7 @@ int main(int argc, char** argv) {
         return 0;
     }
     
-    Menu m("Colour Segmentation",{"RGB","HSV","YUV"});
+    Menu m("Colour Segmentation",{"RGB","HSV","YUV","Exit"});
     cout << "Opened camera:" << cap.get(CAP_PROP_BACKEND)<<endl;
     namedWindow("WebCam", WINDOW_FREERATIO);
     namedWindow("result", WINDOW_FREERATIO);
