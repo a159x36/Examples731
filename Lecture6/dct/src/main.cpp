@@ -99,14 +99,17 @@ public:
         root->data=val;
     }
 
-    // decode a string s using the huffman map
+    // decode a string of bits ('0' and '1') using the huffman map
     vector<int> decode(string s) {
+        // make a tree using the map
         HuffmanNode *root=new HuffmanNode(0,0);
         HuffmanNode *h;
+        // add all the map entries to the tree
         for(pair<int,string> p:map) {
             treefromstring(root,p.first,p.second);
         }
         h=root;
+        // use the tree to decode the string into a vector of ints
         vector<int> v;
         for(char c:s) {
             if(c=='0') h=h->left;
@@ -275,8 +278,8 @@ void zigzag_decode(Mat_<int> m, vector<int> vals) {
 void quantize(Mat_<float> transform, Mat_<int>trint, float qf) {
     for(int i=0;i<transform.rows;i++) {
         for(int j=0;j<transform.cols;j++) {
-            float qc=hypot(i,j)*qf+1;
-            trint(i,j)=round(transform(i,j)/qc);//round(transform(i,j)/qc);
+            float qc=hypot(i,j)*qf*2+1;
+            trint(i,j)=round(transform(i,j)/qc);
         }
     }
 }
@@ -284,7 +287,7 @@ void quantize(Mat_<float> transform, Mat_<int>trint, float qf) {
 void dequantize(Mat_<float> transform, Mat_<int>trint, float qf) {
     for(int i=0;i<transform.rows;i++) {
         for(int j=0;j<transform.cols;j++) {
-            float qc=hypot(i,j)*qf+1;
+            float qc=hypot(i,j)*qf*2+1;
             transform(i,j)=trint(i,j)*qc;
         }
     }
@@ -303,33 +306,46 @@ float mse(Mat_<uint8_t> m1, Mat_<uint8_t> m2) {
     return sumsq/(m1.rows*m1.cols);
 }
 
+// main, uses webcam to get a colour image, encoded it using the dct, quantizes this
+// then dequantizes it and decodes it using an idct. 
 int main(int argc, char** argv) {
+    bool COLOUR=true;
+    bool WEBCAM=true;
+
     (void)argv[argc - 1];
     VideoCapture cap;
     Mat_<Vec3b> frame;
-    cap.open(0);
-    bool COLOUR=true;
-    if (!cap.isOpened()) {
-        cout << "Failed to open camera" << endl;
-        return 0;
+    Mat_<Vec3b> image;
+    if(!WEBCAM) {
+        image=imread("../../../../Images/baboon.jpg");
+        frame=image.clone();
+    } else {
+        cap.open(0);
+        if (!cap.isOpened()) {
+            cout << "Failed to open camera" << endl;
+            return 0;
+        }
+        cap.set(CAP_PROP_FRAME_WIDTH, 640);
+        //   cap.set(CAP_PROP_FRAME_WIDTH, 960);
+        //   cap.set(CAP_PROP_FRAME_WIDTH, 1600);
+        //   cap.set(CAP_PROP_FRAME_HEIGHT, 480);
+        //   cap.set(CAP_PROP_FRAME_HEIGHT, 720);
+        //   cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
+        cap >> frame;
     }
     
     Menu m("Image Coding",{"Save","Load","Exit"});
-    cout << "Opened camera:" << cap.get(CAP_PROP_BACKEND)<<endl;
     namedWindow("WebCam", WINDOW_FREERATIO);
-    namedWindow("result", WINDOW_FREERATIO);
+    namedWindow("Result", WINDOW_AUTOSIZE);
+    namedWindow("Transform", WINDOW_FREERATIO);
+    namedWindow("Colour", WINDOW_FREERATIO);
 
-
-    cap.set(CAP_PROP_FRAME_WIDTH, 640);
-    //   cap.set(CAP_PROP_FRAME_WIDTH, 960);
-    //   cap.set(CAP_PROP_FRAME_WIDTH, 1600);
-    //   cap.set(CAP_PROP_FRAME_HEIGHT, 480);
-    //   cap.set(CAP_PROP_FRAME_HEIGHT, 720);
-    //   cap.set(CAP_PROP_FRAME_HEIGHT, 1080);
-    cap >> frame;
+    
     printf("frame size %d %d\n", frame.rows, frame.cols);
     resizeWindow("WebCam",frame.cols,frame.rows);
-    resizeWindow("result",frame.cols,frame.rows);
+    resizeWindow("Result",frame.cols,frame.rows);
+    resizeWindow("Transform",frame.cols,frame.rows);
+    resizeWindow("Colour",frame.cols,frame.rows);
     int key = 0;
     float fps = 0.0;
     Mat_<uint8_t> proc(frame.rows,frame.cols);
@@ -342,14 +358,17 @@ int main(int argc, char** argv) {
     Mat_<uint8_t> channels[3];
 
     int cutoff=frame.cols/4;
-    createTrackbar( "cutoff", "result", &cutoff, hypot(frame.cols,frame.rows));
+    createTrackbar( "cutoff", "Result", &cutoff, hypot(frame.cols,frame.rows));
     while (1) {
         system_clock::time_point start = system_clock::now();
-        
-        cap >> frame;
+        if(WEBCAM) {
+            cap >> frame;
+        } else {
+            frame=image.clone();
+        }
         if (frame.empty()) break;
 
-        Mat proc=frame.clone();
+        Mat proc;
         cvtColor(frame,colour,COLOR_BGR2YUV);    
         split(colour,channels);
         channels[0].convertTo(grey,CV_32FC1,1);
@@ -376,6 +395,7 @@ int main(int argc, char** argv) {
 
         if(COLOUR) {
             Mat down;
+            Mat_<float> transform(frame.rows/2,frame.cols/2);
             resize(channels[1],down,Size(frame.cols/2,frame.rows/2));
             down.convertTo(u_im,CV_32FC1,1);
             dct(u_im,transform);
@@ -408,7 +428,7 @@ int main(int argc, char** argv) {
         putText(frame, str, Vec2i(10, 30), FONT_HERSHEY_PLAIN, 2,
                 Vec3i(0, 0, 255), 2, 8);
         imshow("WebCam", frame);
-        imshow("result",proc);
+        imshow("Result",proc);
         
         
         key = waitKey(1);
@@ -426,6 +446,7 @@ int main(int argc, char** argv) {
             opfile.close();
         }
         if(m.getselected()=="Load") {
+            Mat_<float> transform(frame.rows,frame.cols);
             m.setselected(-1);
             ifstream ipfile("../../image.txt");
             ipfile>>qf;
@@ -442,6 +463,5 @@ int main(int argc, char** argv) {
         system_clock::time_point end = system_clock::now();
         float mseconds = (end - start) / 1ms;
         fps = 1000.0f / mseconds;
-        string col=m.getselected();
     }
 }
