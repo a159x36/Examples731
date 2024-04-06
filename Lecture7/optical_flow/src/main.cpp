@@ -55,6 +55,7 @@ int main(int argc, char** argv) {
     const int MAX_COUNT = 500;
     
     namedWindow("WebCam", WINDOW_FREERATIO);
+    namedWindow("flow", WINDOW_FREERATIO);
     resizeWindow("WebCam",frame.cols,frame.rows);
 
     vector<Point2f> points[2];
