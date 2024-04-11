@@ -50,17 +50,12 @@ int main(int argc, char** argv) {
 
     int key = 0;
     float fps = 0.0;
- //   Mat_<uint8_t> proc(frame.rows,frame.cols);
- //   Mat_<float> grey(frame.rows,frame.cols);
- //   Mat_<float> u_im(frame.rows,frame.cols);
- //   Mat_<float> v_im(frame.rows,frame.cols);
- //   Mat_<float> transform(frame.rows,frame.cols);
- //   Mat_<float> zeromat=Mat::zeros(frame.size(),CV_32F);
-    Mat_<Vec2f> complex1;//(frame.rows,frame.cols);
-    Mat_<Vec2f> fft;//(frame.rows,frame.cols);
-    Mat_<Vec3b> colour;//(frame.rows,frame.cols);
- //   Mat_<int> trint(frame.rows,frame.cols);
+
+    Mat_<Vec2f> complex1;
+    Mat_<Vec2f> fft;
+    Mat_<Vec3b> colour;
     Mat_<uint8_t> channels[3];
+    Mat_<float> planes[2];
 
     int noise=108;
     int cutoff=138;//frame.cols/4;
@@ -78,16 +73,13 @@ int main(int argc, char** argv) {
         }
         if (frame.empty()) break;
 
-        Mat proc;
         if(COLOUR) {
             split(frame,channels);
         } else {
             cvtColor(frame,colour,COLOR_BGR2YUV);    
             split(colour,channels);
         }
-        Mat_<float> planes[2];
-
-        Mat_<float> denom(frame.size());
+        
         
         int nchannels=1;
         if(COLOUR) nchannels=3;
@@ -105,20 +97,22 @@ int main(int argc, char** argv) {
                     int i1=i<frame.rows/2?i:frame.rows-i;
                     int j1=j<frame.cols/2?j:frame.cols-j;
                     float d=rad*hypot(i1,j1)/10;
-                    if(d==0) d=1;
-                    float H=sin(d)/(d);
-                    
+                    float H,G;
+                    if(d!=0)
+                        H=sin(d)/(d);      
+                    else
+                        H=1;  
                     if(WEINER) {
-                        float denom=abs(H);
-                        denom=denom*denom+noise/10000.0;
-                        H=H/denom;
+                        //  G = H / ((|H|^2)+N)
+                        float denom=H*H+noise/10000.0;
+                        G=H/denom;
                     } else {
-                        if(H>noise/10000.0)
-                            H=1/H;
+                        if(H>noise/1000.0)
+                            G=1/H;
                         else
-                            H=0;
+                            G=0;
                     }
-                    fft(i,j)=fft(i,j)*H;
+                    fft(i,j)=fft(i,j)*G;
                 }
             }
             
