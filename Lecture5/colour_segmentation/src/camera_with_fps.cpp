@@ -68,7 +68,11 @@ int main(int argc, char** argv) {
     (void)argv[argc - 1];
     VideoCapture cap;
     Mat_<Vec3b> frame;
+#if __linux__
     cap.open(0,CAP_V4L2);
+#else
+    cap.open(0);
+#endif
     if (!cap.isOpened()) {
         cout << "Failed to open camera" << endl;
         return 0;

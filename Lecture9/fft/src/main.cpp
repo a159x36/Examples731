@@ -26,7 +26,11 @@ int main(int argc, char** argv) {
     image=imread("../../../../Images/clown.tif");
     frame=image.clone();
     if(WEBCAM) {
+#if __linux__
         cap.open(0,CAP_V4L2);
+#else
+        cap.open(0);
+#endif
         if (!cap.isOpened()) {
             cout << "Failed to open camera" << endl;
             return 0;
