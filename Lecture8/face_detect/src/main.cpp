@@ -19,9 +19,15 @@ int main(int argc, char** argv) {
     Mat_<Vec3b> frame;
     Mat gray;
     CascadeClassifier cascade, nestedCascade;
+    bool YUNet=false;
+
+    Ptr<FaceDetectorYN> ynmodel;
+
+    // this works for openCV 4.5 but use the 2023 model for 4.8 and later
+    ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2021sep.onnx","",Size(640,480));
 
     Menu m("Object Detection",{"Face","Face1","Face2","Body",
-            "Upper Body","Cat","Eye","Eye1","Left Eye","Right Eye","Smile"});
+            "Upper Body","Cat","Eye","Eye1","Left Eye","Right Eye","Smile","YUNet"});
 
     string PATH="../../data/haarcascades/";
     string FACES=PATH+"haarcascade_frontalface_default.xml";
@@ -54,6 +60,7 @@ int main(int argc, char** argv) {
     
     namedWindow("WebCam", WINDOW_FREERATIO);
     resizeWindow("WebCam",frame.cols,frame.rows);
+    ynmodel->setInputSize(frame.size());
 
     float fps;
     while (1) {
@@ -62,29 +69,49 @@ int main(int argc, char** argv) {
         if (frame.empty()) break;
 
         cvtColor(frame, gray, COLOR_BGR2GRAY);
-        vector<Rect> faces, faces2;
-        //equalizeHist( gray, gray );
-        cascade.detectMultiScale( gray, faces,
-        1.1, 2, 0
-        //|CASCADE_FIND_BIGGEST_OBJECT
-        //|CASCADE_DO_ROUGH_SEARCH
-        |CASCADE_SCALE_IMAGE,
-        Size(30, 30) );
-        Mat roi;
-        for ( Rect r:faces ) {
-            rectangle( frame, r, Scalar(0,255,0), 2, LINE_AA);
-            roi = gray( r );
-            vector<Rect> nestedObjects;
-            nestedCascade.detectMultiScale( roi, nestedObjects,
-            1.1, 2, 0
-            //|CASCADE_FIND_BIGGEST_OBJECT
-            //|CASCADE_DO_ROUGH_SEARCH
-            //|CASCADE_DO_CANNY_PRUNING
-            |CASCADE_SCALE_IMAGE,
-            Size(10, 10) );
-            for(Rect r1:nestedObjects) {
-                r1=r1+Point(r.x,r.y);
-                rectangle( frame, r1, Scalar(255,0,0), 2, LINE_AA);
+        if(!YUNet) {
+            vector<Rect> faces;
+            cascade.detectMultiScale( gray, faces, 1.1, 3, 0, Size(30, 30) );
+            Mat roi;
+            for ( Rect r:faces ) {
+                rectangle( frame, r, Scalar(0,255,0), 2, LINE_AA);
+                roi = gray( r );
+                vector<Rect> nestedObjects;
+                nestedCascade.detectMultiScale( roi, nestedObjects, 1.1, 3, 0, Size(10, 10) );
+                for(Rect r1:nestedObjects) {
+                    r1=r1+Point(r.x,r.y);
+                    rectangle( frame, r1, Scalar(255,0,0), 2, LINE_AA);
+                }
+            }
+        } else {
+            Mat_<float> faces;
+            static Scalar box_color{0, 255, 0};
+            static vector<Scalar> landmark_color{
+                Scalar(255,   0,   0), // right eye
+                Scalar(  0,   0, 255), // left eye
+                Scalar(  0, 255,   0), // nose tip
+                Scalar(255,   0, 255), // right mouth corner
+                Scalar(  0, 255, 255)  // left mouth corner
+            };
+            static Scalar text_color{0, 255, 0};
+            ynmodel->detect(frame,faces);
+            for (int i = 0; i < faces.rows; ++i) {
+                // Draw bounding boxes
+                int x1 = faces(i, 0);
+                int y1 = faces(i, 1);
+                int w = faces(i, 2);
+                int h = faces(i, 3);
+                rectangle(frame, Rect(x1, y1, w, h), box_color, 2);
+
+                // Confidence as text
+                float conf = faces(i, 14);
+                putText(frame, format("%.4f", conf), Point(x1, y1+12), FONT_HERSHEY_DUPLEX, 0.5, text_color);
+
+                // Draw landmarks
+                for (int j = 0; j < landmark_color.size(); ++j) {
+                    int x = faces(i, 2*j+4), y = faces(i, 2*j+5);
+                    circle(frame, Point(x, y), 2, landmark_color[j], 2);
+                }
             }
         }
 
@@ -103,6 +130,7 @@ int main(int argc, char** argv) {
         float mseconds = (end - start) / 1ms;
         fps = 1000.0f / mseconds;
         string s=m.getselected();
+        if(s!="") YUNet=false;
         if(s=="Eye") nestedCascade.load(EYES);
         if(s=="Eye1") nestedCascade.load(EYES1);
         if(s=="Left Eye") nestedCascade.load(LEFTEYE);
@@ -114,6 +142,7 @@ int main(int argc, char** argv) {
         if(s=="Cat") cascade.load(CAT);
         if(s=="Upper Body") cascade.load(UPPERBODY);
         if(s=="Smile") nestedCascade.load(SMILE);
+        if(s=="YUNet") YUNet=true;
         m.setselected(-1);
     }
 }
