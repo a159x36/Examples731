@@ -23,8 +23,11 @@ int main(int argc, char** argv) {
 
     Ptr<FaceDetectorYN> ynmodel;
 
-    // this works for openCV 4.5 but use the 2023 model for 4.8 and later
-    ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2021sep.onnx","",Size(640,480));
+    // Choose the correct one of these for your version of opencv
+    //ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2021sep.onnx","",Size(640,480)); // for v4.5
+    ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2022mar.onnx","",Size(640,480)); // for v4.6
+    //ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2023mar.onnx","",Size(640,480)); // for v4.8
+
 
     Menu m("Object Detection",{"Face","Face1","Face2","Body",
             "Upper Body","Cat","Eye","Eye1","Left Eye","Right Eye","Smile","YUNet"});
