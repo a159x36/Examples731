@@ -2,6 +2,9 @@
     "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
     "files.associations": {
         "cmath": "cpp",
-        "complex": "cpp"
+        "complex": "cpp",
+        "*.ipp": "cpp",
+        "bitset": "cpp",
+        "set": "cpp"
     }
 }
