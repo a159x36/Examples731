@@ -84,6 +84,17 @@ void fwht(Mat_<float> in, bool forward) {
         for(int j=0;j<in.cols;j++)
             in(i,j)=out(i,j); 
 }
+
+void changeFocus(int pos, void *data) {
+    VideoCapture *cap=(VideoCapture *)data;
+    cap->set(CAP_PROP_AUTOFOCUS,false);
+    cap->set(CAP_PROP_FOCUS,pos);
+}
+
+void setVal(int pos, void *data) {
+    int *v=(int *)data;
+    *v=pos;
+}
 // main, uses webcam to get a colour image, encoded it using the dct, quantizes this
 // then dequantizes it and decodes it using an idct. 
 int main(int argc, char** argv) {
@@ -96,11 +107,9 @@ int main(int argc, char** argv) {
 
     (void)argv[argc - 1];
     VideoCapture cap;
-    Mat_<Vec3b> frame;
+    Mat_<Vec3b> frame(480,640);
     Mat_<Vec3b> image;
-    image=imread("../../../../Images/clown.tif");
-   // image=imread("../../../../Images/baboon.jpg");
-    frame=image.clone();
+
     if(WEBCAM) {
 #if __linux__
         cap.open(0,CAP_V4L2);
@@ -120,7 +129,7 @@ int main(int argc, char** argv) {
         cap >> frame;
     }
     
-    Menu m("Deconvolution",{"Weiner Filter","Pseudoinverse","Colour","Greyscale","Webcam","Static Image","FWHT","FFT","Exit"});
+    Menu m("Deconvolution",{"Weiner Filter","Pseudoinverse","Colour","Greyscale","Webcam","Clown","Baboon","FWHT","FFT","Exit"});
     namedWindow("WebCam", WINDOW_FREERATIO);
     namedWindow("Result", WINDOW_FREERATIO);
 
@@ -138,15 +147,14 @@ int main(int argc, char** argv) {
     Mat_<float> planes[2];
 
     int noise=108;
-    int cutoff=138;//frame.cols/4;
-    int focus=36;
-    createTrackbar( "cutoff", "WebCam", &cutoff, (frame.rows+frame.cols)*2);
-    createTrackbar( "noise", "WebCam", &noise, 1000);
-    createTrackbar( "focus", "WebCam", &focus, 255);
+    int cutoff=138;
+
+    createTrackbar( "cutoff", "WebCam", NULL, (frame.rows+frame.cols), setVal, &cutoff);
+    createTrackbar( "noise", "WebCam", NULL, 1000, setVal, &noise);
+    createTrackbar( "focus", "WebCam", NULL, 255, changeFocus, &cap);
     while (1) {
         system_clock::time_point start = system_clock::now();
         if(WEBCAM) {
-            cap.set(CAP_PROP_FOCUS,focus);
             cap >> frame;
         } else {
             frame=image.clone();
@@ -173,8 +181,8 @@ int main(int argc, char** argv) {
             for(int i=0;i<hadamard.rows;i++) {
                 for(int j=0;j<hadamard.cols;j++) {
                     float d;
-                    //d=rad*min(i,j)/10;
-                    d=rad*(hypot(hadamard.rows,hadamard.cols)-hypot(hadamard.rows-i,hadamard.cols-j))/100;
+                    d=rad*min(i,j)/100;
+                    //d=rad*(hypot(hadamard.rows,hadamard.cols)-hypot(hadamard.rows-i,hadamard.cols-j))/100;
                     float G;
                     G=exp(-d*d);
                     hadamard(i,j)*=G;
@@ -261,7 +269,12 @@ int main(int argc, char** argv) {
         if(entry=="Webcam") {
             WEBCAM=true;
         }
-        if(entry=="Static Image") {
+        if(entry=="Clown") {
+            image=imread("../../../../Images/clown.tif");
+            WEBCAM=false;
+        }
+        if(entry=="Baboon") {
+            image=imread("../../../../Images/baboon.jpg");
             WEBCAM=false;
         }
         if(entry=="FWHT") {
