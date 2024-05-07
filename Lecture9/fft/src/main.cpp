@@ -83,7 +83,6 @@ void fwht(Mat_<float> in, bool forward) {
     for(int i=0;i<in.rows;i++) 
         for(int j=0;j<in.cols;j++)
             in(i,j)=out(i,j); 
-   // return in;
 }
 // main, uses webcam to get a colour image, encoded it using the dct, quantizes this
 // then dequantizes it and decodes it using an idct. 
@@ -92,8 +91,8 @@ int main(int argc, char** argv) {
     bool WEBCAM=true;
     bool WEINER=true;
     bool HADAMARD=false;
+    bool SHOW_FFT=false;
 
- //   if(HADAMARD) WEBCAM=false;
 
     (void)argv[argc - 1];
     VideoCapture cap;
@@ -185,44 +184,47 @@ int main(int argc, char** argv) {
             fwht(hadamard,false);
             hadamard.convertTo(channels[ch],CV_8UC1);
             }
-        } else 
-
-        for(int ch=0;ch<nchannels;ch++) {
-            planes[0]=Mat_<float>(channels[ch].clone());
-            planes[1]=Mat::zeros(frame.size(),CV_32F);
-            merge(planes, 2, complex1);
-            dft(complex1,fft);
-
-            float rad=(cutoff/100.0+1)/5;
-            for(int i=0;i<frame.rows;i++) {
-                for(int j=0;j<frame.cols;j++) {
-
-                    int i1=i<frame.rows/2?i:frame.rows-i;
-                    int j1=j<frame.cols/2?j:frame.cols-j;
-                    float d=rad*hypot(i1,j1)/10;
-                    float H,G;
-                    if(d!=0)
-                        H=sin(d)/(d);      
-                    else
-                        H=1;  
-                    if(WEINER) {
-                        //  G = H / ((|H|^2)+N)
-                        float denom=H*H+noise/10000.0;
-                        G=H/denom;
-                    } else {
-                        if(H>noise/1000.0)
-                            G=1/H;
-                        else
-                            G=0;
-                    }
-                    fft(i,j)=fft(i,j)*G;
+        } else { // use the FFT
+            for(int ch=0;ch<nchannels;ch++) {
+                planes[0]=Mat_<float>(channels[ch].clone());
+                planes[1]=Mat::zeros(frame.size(),CV_32F);
+                merge(planes, 2, complex1);
+                dft(complex1,fft);
+                if(ch==0 && SHOW_FFT) {
+                    split(fft,planes);
+                    imshow("FFT",planes[0]/(256.0*256.0));
                 }
-            }
-            
-            idft(fft,complex1,DFT_SCALE);
+                float rad=(cutoff/100.0+1)/5;
+                for(int i=0;i<frame.rows;i++) {
+                    for(int j=0;j<frame.cols;j++) {
 
-            split(complex1,planes);
-            planes[0].convertTo(channels[ch],CV_8UC1);
+                        int i1=i<frame.rows/2?i:frame.rows-i;
+                        int j1=j<frame.cols/2?j:frame.cols-j;
+                        float d=rad*hypot(i1,j1)/10;
+                        float H,G;
+                        if(d!=0)
+                            H=sin(d)/(d);      
+                        else
+                            H=1;  
+                        if(WEINER) {
+                            //  G = H / ((|H|^2)+N)
+                            float denom=H*H+noise/10000.0;
+                            G=H/denom;
+                        } else {
+                            if(H>noise/1000.0)
+                                G=1/H;
+                            else
+                                G=0;
+                        }
+                        fft(i,j)=fft(i,j)*G;
+                    }
+                }
+                
+                idft(fft,complex1,DFT_SCALE);
+
+                split(complex1,planes);
+                planes[0].convertTo(channels[ch],CV_8UC1);
+            }
         }
     
         ostringstream ss;
