@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#include <opencv2/stereo.hpp>
 #include "menu.hpp"
 
 using namespace cv;
@@ -16,7 +17,8 @@ void showdisp(string name, Mat disparity) {
     Mat disp8,disp8_3c;
     double min,max;
     minMaxLoc(disparity,&min,&max);
-    disparity.convertTo(disp8, CV_8U,255/max);
+ //   cout<<"maxmin"<<min<<","<<max<<endl;
+    disparity.convertTo(disp8, CV_8U,255.0/max);
     applyColorMap(disp8, disp8_3c, COLORMAP_TURBO);
     imshow(name,disp8_3c);
 }
@@ -72,6 +74,26 @@ int main(int argc, char** argv) {
     maketrackbar( "nD", "DisparityBM", 500, setValSt, &stnd);
     imshow("Left",image_l);
     imshow("Right",image_r);
+    Ptr<stereo::QuasiDenseStereo> stereoqd = stereo::QuasiDenseStereo::create(image_l.size());
+   // show default parameters
+    cout<<stereoqd->Param.corrWinSizeX<<endl;
+    cout<<stereoqd->Param.corrWinSizeY<<endl;
+    cout<<stereoqd->Param.lkTemplateSize<<endl;
+    cout<<stereoqd->Param.gftMaxNumFeatures<<endl;
+    cout<<stereoqd->Param.gftQualityThres<<endl;
+
+  // some parameters to try
+  //  stereoqd->Param.gftMinSeperationDist=40;
+  //  stereoqd->Param.lkTemplateSize=5;
+  //  stereoqd->Param.gftMaxNumFeatures=1000;
+    
+  //  stereoqd->Param.corrWinSizeX=9;
+  //  stereoqd->Param.corrWinSizeY=9;
+  //  stereoqd->Param.neighborhoodSize=5;
+    stereoqd->process(image_l,image_r);
+    disparity = stereoqd->getDisparity();
+    showdisp("DisparityQD",disparity);
+
     while(1) {
         if(redosg) {
             stereosg->setP1(p1);
