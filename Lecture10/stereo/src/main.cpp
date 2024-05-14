@@ -14,7 +14,9 @@ using namespace chrono;
 
 void showdisp(string name, Mat disparity) {
     Mat disp8,disp8_3c;
-    disparity.convertTo(disp8, CV_8U,0.25);
+    double min,max;
+    minMaxLoc(disparity,&min,&max);
+    disparity.convertTo(disp8, CV_8U,255/max);
     applyColorMap(disp8, disp8_3c, COLORMAP_TURBO);
     imshow(name,disp8_3c);
 }
@@ -46,6 +48,8 @@ int main(int argc, char** argv) {
     int p2=100;
     int bs=9;
     int stbs=9;
+    int nd=132;
+    int stnd=132;
 
     Mat image_l=imread("../../im0.png",IMREAD_GRAYSCALE);
     Mat image_r=imread("../../im1.png",IMREAD_GRAYSCALE);
@@ -57,20 +61,22 @@ int main(int argc, char** argv) {
     namedWindow("DisparityBM",WINDOW_AUTOSIZE);
     
     Mat disparity;
-    Ptr<StereoMatcher> stereo=StereoBM::create(96,9);
-    Ptr<StereoSGBM> stereosg=StereoSGBM::create(0,96,9,10,100);
+    Ptr<StereoMatcher> stereo=StereoBM::create(132,9);
+    Ptr<StereoSGBM> stereosg=StereoSGBM::create(0,132,9,10,100);
 
     maketrackbar( "P1", "DisparitySGBM", 1000, setValSg, &p1);
     maketrackbar( "P2", "DisparitySGBM", 1000, setValSg, &p2);
     maketrackbar( "BS", "DisparitySGBM", 50, setValSg, &bs);
+    maketrackbar( "nD", "DisparitySGBM", 500, setValSg, &nd);
     maketrackbar( "BS", "DisparityBM", 20, setValSt, &stbs);
-
+    maketrackbar( "nD", "DisparityBM", 500, setValSt, &stnd);
     imshow("Left",image_l);
     imshow("Right",image_r);
     while(1) {
         if(redosg) {
             stereosg->setP1(p1);
             stereosg->setP2(p2);
+            stereosg->setNumDisparities(nd+1);
             stereosg->setBlockSize(bs);
             stereosg->compute(image_l,image_r,disparity);
             showdisp("DisparitySGBM",disparity);
@@ -78,6 +84,7 @@ int main(int argc, char** argv) {
         }
         if(redost) {
             stereo->setBlockSize(stbs*2+5);
+            stereo->setNumDisparities((stnd/16+1)*16);
             stereo->compute(image_l,image_r,disparity);
             showdisp("DisparityBM",disparity);
             redost=false;
