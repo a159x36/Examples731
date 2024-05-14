@@ -102,7 +102,7 @@ int main(int argc, char** argv) {
     bool WEBCAM=true;
     bool WEINER=true;
     bool HADAMARD=false;
-    bool SHOW_FFT=false;
+    bool SHOW_FFT=true;
 
 
     (void)argv[argc - 1];
