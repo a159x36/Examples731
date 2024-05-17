@@ -14,7 +14,7 @@ void good_schedule(vector <Func> v) {
         if (gpu)
             f.compute_root().gpu_tile(x,y, xo,yo,xi, yi, 16,16);
         else
-            f.compute_root().tile(x, y, xi, yi, 16, 16).parallel(y).vectorize(xi,16);
+            f.compute_root().tile(x, y, xi, yi, 8, 8).parallel(y).vectorize(xi,8);
     }
 }
 

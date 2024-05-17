@@ -28,7 +28,7 @@ class Menu {
         menutitle=title;
         menuitems=items;
         image=Mat_<Vec3b>(menuitems.size()*32,width);
-        namedWindow(menutitle);
+        namedWindow(menutitle,GUI_N);
         setMouseCallback(menutitle,onmouse,(void *)this);
         drawmenu();
     }
