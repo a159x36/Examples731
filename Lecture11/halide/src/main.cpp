@@ -61,6 +61,32 @@ public:
 		halide_vel_step(u, v, u0, v0, visc, dt, u, v);
 		halide_dens_step(dens,dens0,u,v,diff,dt, dens);
 	}
+
+	void add_dens(int x,int y) {
+		dens.copy_to_host();
+		for(int i=x-1;i<=x+1;i++)
+			for(int j=y-1;j<=y+1;j++) {
+				int ii=clamp(i,0,width-1);
+				int jj=clamp(j,0,height-1);
+				dens(ii,jj)=500;
+			}
+		dens.set_host_dirty();
+	}
+	void add_vel(int x,int y, int dx, int dy) {
+		cout<<"v"<<x<<","<<y<<","<<dx<<","<<dy<<endl;
+		u.copy_to_host();
+		v.copy_to_host();
+		for(int i=x-1;i<=x+1;i++)
+			for(int j=y-1;j<=y+1;j++) {
+				int ii=clamp(i,0,width-1);
+				int jj=clamp(j,0,height-1);
+				u(ii,jj)=dy*force;
+				v(ii,jj)=dx*force;
+			}
+		u.set_host_dirty();
+		v.set_host_dirty();
+	}
+
 	void get_bitmap(Buffer<unsigned> rgb_h) {
 		halide_bitmap(dens,u,v,rgb_h);
 		rgb_h.copy_to_host();
@@ -74,23 +100,42 @@ double get_time() {
 	clock_gettime(CLOCK_REALTIME,&time);
 	return time.tv_sec+time.tv_nsec/1e9;
 }
+static void onmouse(int event, int x, int y, int , void *userdata) {
+	FluidSim *fs=(FluidSim *)userdata;
+	static int lx,ly;
+	static bool ld=false;
+	static bool rd=false;
+	if(event==EVENT_RBUTTONDOWN) rd=true;
+	if(event==EVENT_RBUTTONUP) rd=false;
+	if(event==EVENT_LBUTTONDOWN) ld=true;
+	if(event==EVENT_LBUTTONUP) ld=false;
+
+	if(rd)
+		fs->add_dens(x,y);
+	if(ld)
+		fs->add_vel(x,y,x-lx,y-ly);
+	lx=x;
+	ly=y;
+}
 
 
-int main ( int argc, char ** argv )
-{
+int main ( int argc, char ** argv ) {
+	(void)argc,(void)argv;
 	double fps;
 	int frames=0;
 	double lasttime=0,lasttime1=0;
 	Mat_<Vec4b> rgb(512,512);
-	FluidSim fsim(rgb.cols,rgb.rows,0.1f,0,0,5.0f,100.0f);
+	FluidSim fsim(rgb.cols,rgb.rows,0.1f,0.000001f,0.0000001,5.0f,100.0f);
 	
 	namedWindow("Fluid",WINDOW_FREERATIO);
 	resizeWindow("Fluid",rgb.cols,rgb.rows);
 
+	setMouseCallback("Fluid",onmouse,(void *)&fsim);
+
+
 	Buffer<uint32_t> rgb_h=Buffer<uint32_t>((uint32_t *)rgb.data, rgb.cols, rgb.rows);
 	while(1) {
-	//	cout<<"frame:"<<frames<<endl;
-		double time,time1,time2,newtime;
+		double time,time2,newtime;
 		time=get_time();
 		fsim.step();
 		time2=get_time();

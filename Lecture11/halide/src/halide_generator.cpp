@@ -23,7 +23,7 @@ FuncRef lin_solve(Func in, Func x0, Expr a, Expr c, Expr w, Expr h, int num_step
     Func fin=BoundaryConditions::constant_exterior(in, 0, 1, w-2, 1, h-2);
     Expr invc=1.0f/c;
 
-    Func f[num_steps+1];
+    vector<Func> f(num_steps+1);
     f[0]=fin;
     // uses Jacobi rather than Gauss-Seidel so converges a bit slower
     for(int k=1 ; k<=num_steps ; k++) {
@@ -98,8 +98,8 @@ public:
     }
 
     void schedule() {
-        int parallel_task_size = 8;
-        int vector_width = 4;
+       // int parallel_task_size = 8;
+       // int vector_width = 4;
         if (auto_schedule) {
             u.set_estimates({{0, 512},{0, 786}});
             v.set_estimates({{0, 512},{0, 786}});
