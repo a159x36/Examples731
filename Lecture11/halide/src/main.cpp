@@ -24,7 +24,7 @@ private:
 	float dt, diff, visc;
 	float force, source;
 	int flames=3;
-
+	bool changed=true;
 	Buffer<float> u, v, u0, v0, dens, dens0;
 
 public: 
@@ -49,15 +49,18 @@ public:
 			dens0.deallocate();
 	}
 	void step(void) {
-		for(int i=0;i<flames;i++) {
-			int xp = width / (flames + 1) * (i + 1);
-			dens0(xp,height-10)=source;
-			v0(xp,height-10) = 0;
-			u0(xp,height-10) = -force;
+		if(changed) {
+			for(int i=0;i<flames;i++) {
+				int xp = width / (flames + 1) * (i + 1);
+				dens0(xp,height-10)=source;
+				v0(xp,height-10) = 0;
+				u0(xp,height-10) = -force;
+			}
+			u0.set_host_dirty();
+			v0.set_host_dirty();
+			dens0.set_host_dirty();
+			changed=false;
 		}
-		u0.set_host_dirty();
-		v0.set_host_dirty();
-		dens0.set_host_dirty();
 		halide_vel_step(u, v, u0, v0, visc, dt, u, v);
 		halide_dens_step(dens,dens0,u,v,diff,dt, dens);
 	}
@@ -73,7 +76,7 @@ public:
 		dens.set_host_dirty();
 	}
 	void add_vel(int x,int y, int dx, int dy) {
-		cout<<"v"<<x<<","<<y<<","<<dx<<","<<dy<<endl;
+		//cout<<"v"<<x<<","<<y<<","<<dx<<","<<dy<<endl;
 		u.copy_to_host();
 		v.copy_to_host();
 		for(int i=x-1;i<=x+1;i++)
@@ -90,6 +93,19 @@ public:
 	void get_bitmap(Buffer<unsigned> rgb_h) {
 		halide_bitmap(dens,u,v,rgb_h);
 		rgb_h.copy_to_host();
+	}
+	static void setDiffusion(int pos, void *data) {
+		FluidSim *fsim=(FluidSim *)data;
+		fsim->diff=pos/10000000.0;
+	}
+	static void setViscosity(int pos, void *data) {
+		FluidSim *fsim=(FluidSim *)data;
+		fsim->visc=pos/10000000.0;
+	}
+	static void setForce(int pos, void *data) {
+		FluidSim *fsim=(FluidSim *)data;
+		fsim->force=pos*0.5f;
+		fsim->changed=true;
 	}
 };
 
@@ -125,12 +141,15 @@ int main ( int argc, char ** argv ) {
 	int frames=0;
 	double lasttime=0,lasttime1=0;
 	Mat_<Vec4b> rgb(512,512);
-	FluidSim fsim(rgb.cols,rgb.rows,0.1f,0.000001f,0.0000001,5.0f,100.0f);
+	FluidSim fsim(rgb.cols,rgb.rows,0.1f,0.000001f,0.0000001,10.0f,200.0f);
 	
-	namedWindow("Fluid",WINDOW_FREERATIO);
+	namedWindow("Fluid",WINDOW_FREERATIO | WINDOW_GUI_NORMAL);
 	resizeWindow("Fluid",rgb.cols,rgb.rows);
 
 	setMouseCallback("Fluid",onmouse,(void *)&fsim);
+	createTrackbar("Diffusion","Fluid",NULL,100,fsim.setDiffusion, &fsim);
+	createTrackbar("Viscosity","Fluid",NULL,100,fsim.setViscosity, &fsim);
+	createTrackbar("Force","Fluid",NULL,100,fsim.setForce, &fsim);
 
 
 	Buffer<uint32_t> rgb_h=Buffer<uint32_t>((uint32_t *)rgb.data, rgb.cols, rgb.rows);
@@ -148,18 +167,19 @@ int main ( int argc, char ** argv ) {
 			printf("Fps:%f %f %d\n", 1.0 / (newtime-time), 1.0/(time2-time),frames);
 			frames=0;
 		}
-		if(time-lasttime>1/60.0) {
+		if(time-lasttime>1/30.0) {
 			fsim.get_bitmap(rgb_h);
 			ostringstream ss;
         	ss<<setprecision(4)<<fps<<"fps ";
 			putText(rgb,ss.str(),Point(16,16),FONT_HERSHEY_PLAIN, 1, Vec3i(255, 255, 255));
 			imshow("Fluid",rgb);
 			lasttime=time;
+			int k=pollKey();
+			if(k=='q') {
+				exit(1);
+			}
 		}
-		int k=waitKey(1);
-		if(k=='q') {
-			exit(1);
-		}
+		
 	}
 
 	exit ( 0 );
