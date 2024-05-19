@@ -48,7 +48,10 @@ public:
 			dens.deallocate();
 			dens0.deallocate();
 	}
-	void step(void) {
+	void step(double dtt) {
+		if(dtt>0)
+			dt=dtt;
+		//cout<<dt<<endl;
 		if(changed) {
 			for(int i=0;i<flames;i++) {
 				int xp = width / (flames + 1) * (i + 1);
@@ -76,7 +79,6 @@ public:
 		dens.set_host_dirty();
 	}
 	void add_vel(int x,int y, int dx, int dy) {
-		//cout<<"v"<<x<<","<<y<<","<<dx<<","<<dy<<endl;
 		u.copy_to_host();
 		v.copy_to_host();
 		for(int i=x-1;i<=x+1;i++)
@@ -116,6 +118,7 @@ double get_time() {
 	clock_gettime(CLOCK_REALTIME,&time);
 	return time.tv_sec+time.tv_nsec/1e9;
 }
+
 static void onmouse(int event, int x, int y, int , void *userdata) {
 	FluidSim *fs=(FluidSim *)userdata;
 	static int lx,ly;
@@ -143,28 +146,25 @@ int main ( int argc, char ** argv ) {
 	Mat_<Vec4b> rgb(512,512);
 	FluidSim fsim(rgb.cols,rgb.rows,0.1f,0.000001f,0.0000001,10.0f,200.0f);
 	
-	namedWindow("Fluid",WINDOW_FREERATIO | WINDOW_GUI_NORMAL);
-	resizeWindow("Fluid",rgb.cols,rgb.rows);
-
+	namedWindow("Fluid",WINDOW_NORMAL | WINDOW_GUI_NORMAL);
+	resizeWindow("Fluid",rgb.cols,rgb.rows + 100);
 	setMouseCallback("Fluid",onmouse,(void *)&fsim);
 	createTrackbar("Diffusion","Fluid",NULL,100,fsim.setDiffusion, &fsim);
 	createTrackbar("Viscosity","Fluid",NULL,100,fsim.setViscosity, &fsim);
 	createTrackbar("Force","Fluid",NULL,100,fsim.setForce, &fsim);
 
-
 	Buffer<uint32_t> rgb_h=Buffer<uint32_t>((uint32_t *)rgb.data, rgb.cols, rgb.rows);
 	while(1) {
-		double time,time2,newtime;
+		double time,newtime,oldtime=0;
 		time=get_time();
-		fsim.step();
-		time2=get_time();
+		fsim.step((time-oldtime)/10000000000.0);
+		oldtime=time;
 		frames++;
 		if(time-lasttime1>1) {
-			
 			lasttime1=time;
 			newtime=get_time();
 			fps=1.0 / (newtime-time);
-			printf("Fps:%f %f %d\n", 1.0 / (newtime-time), 1.0/(time2-time),frames);
+			cout<<"Fps:"<< 1.0 / (newtime-time) <<","<<frames<<endl;
 			frames=0;
 		}
 		if(time-lasttime>1/30.0) {
