@@ -3,7 +3,6 @@ using namespace Halide;
 using namespace std;
 bool gpu=false;
 bool auto_sch=false;
-bool auto_schedule=false;
 
 Var x("x"), y("y"),xi("xi"), yi("yi"), yo("yo"),xo("xo");
 
@@ -34,9 +33,9 @@ FuncRef lin_solve(Func in, Func x0, Expr a, Expr c, Expr w, Expr h, int num_step
                 if (gpu) {
                     good_schedule({f[k]});//,f[k - 1]});
                 } else {
-                    f[k].tile(x, y, xi, yi, 16, 16);
-                    f[k].compute_root().parallel(y).vectorize(xi, 4);
-                    f[k - 1].compute_at(f[k], y).vectorize(x, 4);
+                    f[k].tile(x, y, xi, yi, 8, 8);
+                    f[k].compute_root().parallel(y).vectorize(xi, 8);
+                    f[k - 1].compute_at(f[k], y).vectorize(x, 8);
                 }
             }
         }
@@ -60,7 +59,7 @@ FuncRef advect (Func d0, Func u, Func v, Expr dt, Expr w, Expr h) {
     Expr j1=j0+1;
     Expr s1 = xx-i0;
     Expr t1 = yy-j0;
-    advected(x,y) = lerp(lerp(d0(i0,j0),d0(i0,j0+1),t1),lerp(d0(i0+1,j0),d0(i0+1,j0+1),t1),s1);
+    advected(x,y) = lerp(lerp(d0(i0,j0),d0(i0,j1),t1),lerp(d0(i1,j0),d0(i1,j1),t1),s1); 
     return advected(x,y);
 }
 
@@ -89,7 +88,7 @@ public:
     Func diffused{"diffused"};
     void generate() {
         gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::OpenGLCompute);
-        auto_sch = auto_schedule;
+        auto_sch = using_autoscheduler();
         Expr w = dens.width();
         Expr h = dens.height();
         src_added(x,y) = dens(x,y) + dens_prev(x,y) * dt;
@@ -100,14 +99,14 @@ public:
     void schedule() {
        // int parallel_task_size = 8;
        // int vector_width = 4;
-        if (auto_schedule) {
+        if (using_autoscheduler()) {
             u.set_estimates({{0, 512},{0, 786}});
             v.set_estimates({{0, 512},{0, 786}});
             dens.set_estimates({{0, 512},{0, 786}});
             dens_prev.set_estimates({{0, 512},{0, 786}});
             output.set_estimates({{0, 512},{0, 786}});
-            dt.set_estimate(0.1);
-            diff.set_estimate(0.00001);
+            dt.set_estimate(0.1f);
+            diff.set_estimate(0.00001f);
         } else {
             good_schedule({output});
         }
@@ -131,7 +130,7 @@ public:
 
     void generate() {
         gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::OpenGLCompute)|| get_target().has_feature(Target::Vulkan) ;
-        auto_sch = auto_schedule;
+        auto_sch = using_autoscheduler();
         Expr w = u.width();
         Expr h = u.height();
         uu(x,y) = u(x,y) + u0(x,y) * dt;
@@ -145,7 +144,7 @@ public:
     }
 
     void schedule() {
-        if (auto_schedule) {
+        if (using_autoscheduler()) {
             u.set_estimates({{0, 512},{0, 786}});
             v.set_estimates({{0, 512},{0, 786}});
             u0.set_estimates({{0, 512},{0, 786}});
@@ -188,7 +187,7 @@ public:
     }
 
     void schedule() {
-        if (auto_schedule) {
+        if (using_autoscheduler()) {
           d.set_estimates({{0, 512},{0, 786}});
           u.set_estimates({{0, 512},{0, 786}});
           v.set_estimates({{0, 512},{0, 786}});
