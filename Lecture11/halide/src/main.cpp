@@ -1,5 +1,3 @@
-
-
 #include <chrono>
 #include <ctime>
 #include <iostream>
@@ -92,7 +90,7 @@ public:
 		v.set_host_dirty();
 	}
 
-	void get_bitmap(Buffer<unsigned> rgb_h) {
+	void get_bitmap(Buffer<> rgb_h) {
 		halide_bitmap(dens,u,v,rgb_h);
 		rgb_h.copy_to_host();
 	}
@@ -154,6 +152,7 @@ int main ( int argc, char ** argv ) {
 	createTrackbar("Force","Fluid",NULL,100,fsim.setForce, &fsim);
 
 	Buffer<uint32_t> rgb_h=Buffer<uint32_t>((uint32_t *)rgb.data, rgb.cols, rgb.rows);
+
 	while(1) {
 		double time,newtime,oldtime=0;
 		time=get_time();
@@ -168,12 +167,12 @@ int main ( int argc, char ** argv ) {
 			frames=0;
 		}
 		if(time-lasttime>1/30.0) {
+			lasttime=time;
 			fsim.get_bitmap(rgb_h);
 			ostringstream ss;
         	ss<<setprecision(4)<<fps<<"fps ";
 			putText(rgb,ss.str(),Point(16,16),FONT_HERSHEY_PLAIN, 1, Vec3i(255, 255, 255));
 			imshow("Fluid",rgb);
-			lasttime=time;
 			int k=pollKey();
 			if(k=='q') {
 				exit(1);
