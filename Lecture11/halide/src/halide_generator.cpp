@@ -1,6 +1,8 @@
 #include <Halide.h>
 using namespace Halide;
 using namespace std;
+using namespace ConciseCasts;
+
 bool gpu=false;
 bool auto_sch=false;
 
@@ -53,8 +55,8 @@ FuncRef advect (Func d0, Func u, Func v, Expr dt, Expr w, Expr h) {
     Expr dt0 = dt*200;
     Expr xx = clamp(x-dt0*v(x,y), 0.5f, w-0.5f);
     Expr yy = clamp(y-dt0*u(x,y), 0.5f, h-0.5f);
-    Expr i0=cast<int>(xx);
-    Expr j0=cast<int>(yy);
+    Expr i0=i32(xx);
+    Expr j0=i32(yy);
     Expr i1=i0+1;
     Expr j1=j0+1;
     Expr s1 = xx-i0;
@@ -180,10 +182,10 @@ public:
 
     void generate() {
         gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::OpenGLCompute);
-        Expr r =cast<unsigned>(clamp((d(x , y ) * 255), 0, 255));
-        Expr g = cast<unsigned>(clamp((u(x , y ) * -2000) + 128, 0, 255));
-        Expr b = cast<unsigned>(clamp((v(x , y ) * 2000) + 128, 0, 255));
-        output(x, y) = cast<unsigned>((r<<16) | (g << 8) | (b ) | Expr(0xff000000));
+        Expr r = u32(clamp((d(x , y ) * 255), 0, 255));
+        Expr g = u32(clamp((u(x , y ) * -2000) + 128, 0, 255));
+        Expr b = u32(clamp((v(x , y ) * 2000) + 128, 0, 255));
+        output(x, y) = u32((r<<16) | (g << 8) | (b ) | Expr(0xff000000));
     }
 
     void schedule() {
