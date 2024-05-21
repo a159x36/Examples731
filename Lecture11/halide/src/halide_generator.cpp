@@ -52,7 +52,7 @@ FuncRef diffuse(Func dens, Func dens0, Expr diff, Expr dt, Expr w, Expr h ) {
 
 FuncRef advect (Func d0, Func u, Func v, Expr dt, Expr w, Expr h) {
     Func advected{"advected"};
-    Expr dt0 = dt*200;
+    Expr dt0 = dt*w;
     Expr xx = clamp(x-dt0*v(x,y), 0.5f, w-0.5f);
     Expr yy = clamp(y-dt0*u(x,y), 0.5f, h-0.5f);
     Expr i0=i32(xx);
