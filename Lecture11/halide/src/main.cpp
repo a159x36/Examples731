@@ -19,15 +19,15 @@ class FluidSim {
 
 private:
 	int width, height;
-	float dt, diff, visc;
+	float diff, visc;
 	float force, source;
 	int flames=3;
 	bool changed=true;
 	Buffer<float> u, v, u0, v0, dens, dens0;
 
 public: 
-	FluidSim( int width, int height, float dt, float diff, float visc, float force, float source) : 
-		width(width), height(height), dt(dt), diff(diff), visc(visc), force(force), source(source) {
+	FluidSim( int width, int height, float diff, float visc, float force, float source) : 
+		width(width), height(height), diff(diff), visc(visc), force(force), source(source) {
 		int r=height,c=width;
 
 		u=Buffer<float>(c,r);
@@ -46,10 +46,7 @@ public:
 			dens.deallocate();
 			dens0.deallocate();
 	}
-	void step(double dtt) {
-		if(dtt>0)
-			dt=dtt;
-		//cout<<dt<<endl;
+	void step(double dt) {
 		if(changed) {
 			for(int i=0;i<flames;i++) {
 				int xp = width / (flames + 1) * (i + 1);
@@ -65,7 +62,10 @@ public:
 		halide_vel_step(u, v, u0, v0, visc, dt, u, v);
 		halide_dens_step(dens,dens0,u,v,diff,dt, dens);
 	}
-
+	int clamp(int i, int min, int max) {
+		if(i<min) return min;
+		return (i>max)?max:i;
+	}
 	void add_dens(int x,int y) {
 		dens.copy_to_host();
 		for(int i=x-1;i<=x+1;i++)
@@ -134,16 +134,17 @@ static void onmouse(int event, int x, int y, int , void *userdata) {
 	lx=x;
 	ly=y;
 }
-
-
 int main ( int argc, char ** argv ) {
 	(void)argc,(void)argv;
 	double fps;
 	int frames=0;
 	double lasttime=0,lasttime1=0;
 	Mat_<Vec4b> rgb(512,512);
-	FluidSim fsim(rgb.cols,rgb.rows,0.1f,0.000001f,0.0000001,10.0f,200.0f);
+	bool FIXED_TIMESTEP=true;
+	double timestep=0.1;
+	FluidSim fsim(rgb.cols,rgb.rows,0.0000023f,0.0000001,10.0f,200.0f);
 	
+
 	namedWindow("Fluid",WINDOW_NORMAL | WINDOW_GUI_NORMAL);
 	resizeWindow("Fluid",rgb.cols,rgb.rows + 100);
 	setMouseCallback("Fluid",onmouse,(void *)&fsim);
@@ -152,11 +153,10 @@ int main ( int argc, char ** argv ) {
 	createTrackbar("Force","Fluid",NULL,100,fsim.setForce, &fsim);
 
 	Buffer<uint32_t> rgb_h=Buffer<uint32_t>((uint32_t *)rgb.data, rgb.cols, rgb.rows);
-
+	double time,newtime,oldtime=get_time();
 	while(1) {
-		double time,newtime,oldtime=0;
 		time=get_time();
-		fsim.step((time-oldtime)/10000000000.0);
+		fsim.step(FIXED_TIMESTEP?timestep:(time-oldtime)*10);
 		oldtime=time;
 		frames++;
 		if(time-lasttime1>1) {
