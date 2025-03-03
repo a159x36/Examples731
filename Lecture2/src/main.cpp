@@ -57,6 +57,10 @@ int main(int argc, char** argv) {
     (void)argv[argc - 1];
     srand(100);
     Mat_<uint8_t> im_grey=imread("../../Binary1.jpg",IMREAD_GRAYSCALE);
+    
+    // use the following for a more difficult example
+    // Mat_<uint8_t> im_grey=imread("../../Hilbert.png",IMREAD_GRAYSCALE);
+
     //  uncomment the following for a random image instead
     /*
     Mat_<uint8_t> im_grey(1000,1000);
