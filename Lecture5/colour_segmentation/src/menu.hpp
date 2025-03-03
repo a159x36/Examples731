@@ -28,7 +28,7 @@ class Menu {
         menutitle=title;
         menuitems=items;
         image=Mat_<Vec3b>(menuitems.size()*32,width);
-        namedWindow(menutitle);
+        namedWindow(menutitle,WINDOW_GUI_NORMAL | WINDOW_AUTOSIZE);
         setMouseCallback(menutitle,onmouse,(void *)this);
         drawmenu();
     }
@@ -40,7 +40,7 @@ class Menu {
     }
     void setselected(int i) {
         selected=i;
-        if(menuitems[i]=="Exit") exit(1);
+        if(i>=0 && menuitems[i]=="Exit") exit(1);
     }
     string getselected() {
         if(selected==-1) return "";
