@@ -97,7 +97,7 @@ class Menu {
         menutitle=title;
         menuitems=items;
         image=Mat_<Vec3b>(menuitems.size()*32,width);
-        namedWindow(menutitle,WINDOW_GUI_NORMAL | WINDOW_AUTOSIZE);
+        namedWindow(menutitle,WINDOW_GUI_NORMAL | WINDOW_AUTOSIZE );
         setMouseCallback(menutitle,onmouse,(void *)this);
         drawmenu();
     }
@@ -227,7 +227,7 @@ Mat_<uint8_t> zc(Mat_<int16_t> im) {
 
 int main(int argc, char** argv) {
     (void)argv[argc - 1];
-    bool COLOUR=true;
+    bool COLOUR=false;
     bool has_camera=true;
     VideoCapture cap;
     Mat_<Vec3b> frame;
@@ -258,7 +258,7 @@ int main(int argc, char** argv) {
     int key = 0;
     float fps = 0.0;
     cv::Ptr<cv::CLAHE> clahe=createCLAHE(2.0,Size(4,4));
-    Menu m=Menu("Menu",vector<string>({"Negative", "Threshold", "Stretch", "Enhance", "Sobel", "Equalize", "CLAHE", "Edges", "Rotate", "Exit"}));
+    Menu m=Menu("Menu",vector<string>({"Original","Negative", "Threshold", "Stretch", "Enhance", "Sobel", "Equalize", "CLAHE", "Edges", "Rotate", "Exit"}));
     while (1) {
         system_clock::time_point start = system_clock::now();
         if(has_camera)
@@ -301,6 +301,20 @@ int main(int argc, char** argv) {
         } else {
             imshow("Processed", grey);
         }
+        vector<int> hist(255);
+        
+        for(uint8_t p:grey)  hist[p]++;
+        
+        int max=0;
+        for(int i:hist) if(i>max) max=i;
+        
+        Mat_<uchar> histogram(256,256);
+        for(int i=0;i<256;i++)
+          for(int j=0;j<256;j++) {
+            if((256*hist[j]/max)<=(255-i)) histogram(i,j)=0;
+            else histogram(i,j)=255;
+          }
+        imshow("Hist",histogram);
         key = waitKey(1);
         if (key == 113 || key == 27 ) {return 0; } // either esc or 'q'
         system_clock::time_point end = system_clock::now();
