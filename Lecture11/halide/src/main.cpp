@@ -134,6 +134,7 @@ static void onmouse(int event, int x, int y, int , void *userdata) {
 	lx=x;
 	ly=y;
 }
+
 int main ( int argc, char ** argv ) {
 	(void)argc,(void)argv;
 	double fps;

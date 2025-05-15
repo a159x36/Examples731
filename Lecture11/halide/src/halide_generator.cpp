@@ -89,7 +89,7 @@ public:
     Func src_added{"src_added"};
     Func diffused{"diffused"};
     void generate() {
-        gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::OpenGLCompute);
+        gpu = get_target().has_gpu_feature();
         auto_sch = using_autoscheduler();
         Expr w = dens.width();
         Expr h = dens.height();
@@ -131,7 +131,7 @@ public:
     Func au0{"au0"}, av0{"av0"}, adU{"adU"}, adV{"adV"};
 
     void generate() {
-        gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::OpenGLCompute)|| get_target().has_feature(Target::Vulkan) ;
+        gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::Vulkan) ;
         auto_sch = using_autoscheduler();
         Expr w = u.width();
         Expr h = u.height();
@@ -181,7 +181,7 @@ public:
     Output<Buffer<unsigned>> output{"output", 2};
 
     void generate() {
-        gpu = get_target().has_gpu_feature() || get_target().has_feature(Target::OpenGLCompute);
+        gpu = get_target().has_gpu_feature() ;
         Expr r = u32(clamp((d(x , y ) * 255), 0, 255));
         Expr g = u32(clamp((u(x , y ) * -2000) + 128, 0, 255));
         Expr b = u32(clamp((v(x , y ) * 2000) + 128, 0, 255));
