@@ -23,5 +23,4 @@ make_halide_target("" host-profile "")
 make_halide_target(vulkan_ host-vulkan-profile "")
 make_halide_target(cuda_ host-cuda-profile "")
 make_halide_target(opencl_ host-opencl-profile "")
-make_halide_target(opengl_ host-openglcompute-profile "")
 
