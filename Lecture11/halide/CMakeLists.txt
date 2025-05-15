@@ -19,8 +19,8 @@ set(CMAKE_CXX_EXTENSIONS NO)
 # Find Halide
 #########################################################
 # change this to your Halide install location if necessary
-#set(CMAKE_PREFIX_PATH "/opt/Halide-17.0.1-x86-64-linux")
-find_package(Halide 17 REQUIRED)
+#set(CMAKE_PREFIX_PATH "/opt/Halide-19.0.0-x86-64-linux")
+find_package(Halide 19 REQUIRED)
 
 #########################################################
 # Include directories
