@@ -301,7 +301,7 @@ int main(int argc, char** argv) {
         } else {
             imshow("Processed", grey);
         }
-        vector<int> hist(255);
+        vector<int> hist(256);
         
         for(uint8_t p:grey)  hist[p]++;
         
