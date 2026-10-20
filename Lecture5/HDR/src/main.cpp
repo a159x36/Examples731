@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#include <opencv2/geometry.hpp>
 
 using namespace cv;
 using namespace std;

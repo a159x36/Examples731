@@ -10,7 +10,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 # Find OpenCV
 #########################################################
 
-find_package(OpenCV 4.0.0 REQUIRED)
+find_package(OpenCV REQUIRED)
 
 #########################################################
 # Include directories
@@ -28,7 +28,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
 	add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-O2>")
 	add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
-	add_compile_options(-fvisibility=hidden -pthread -msse2)
+	add_compile_options(-fvisibility=hidden -pthread)
 	# Uncomment for profiling
 	#add_compile_options(-pg)
 	#add_link_options(-pg)

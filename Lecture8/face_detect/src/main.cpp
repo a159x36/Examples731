@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#include <opencv2/xobjdetect.hpp> 
 #include "menu.hpp"
 
 using namespace cv;
@@ -25,8 +26,8 @@ int main(int argc, char** argv) {
 
     // Choose the correct one of these for your version of opencv
     //ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2021sep.onnx","",Size(640,480)); // for v4.5
-    ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2022mar.onnx","",Size(640,480)); // for v4.6
-    //ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2023mar.onnx","",Size(640,480)); // for v4.8
+    //ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2022mar.onnx","",Size(640,480)); // for v4.6
+    ynmodel=FaceDetectorYN::create("../../data/face_detection_yunet_2023mar.onnx","",Size(640,480)); // for v4.8
 
 
     Menu m("Object Detection",{"Face","Face1","Face2","Body",
@@ -53,6 +54,7 @@ int main(int argc, char** argv) {
         cout << "Failed to open camera" << endl;
         return 0;
     }
+    cap.set(CAP_PROP_FRAME_HEIGHT, 480);
     cap.set(CAP_PROP_FRAME_WIDTH, 640);
     //   cap.set(CAP_PROP_FRAME_WIDTH, 960);
     //   cap.set(CAP_PROP_FRAME_WIDTH, 1600);
@@ -146,6 +148,6 @@ int main(int argc, char** argv) {
         if(s=="Upper Body") cascade.load(UPPERBODY);
         if(s=="Smile") nestedCascade.load(SMILE);
         if(s=="YUNet") YUNet=true;
-        m.setselected(-1);
+        //m.setselected(s);
     }
 }

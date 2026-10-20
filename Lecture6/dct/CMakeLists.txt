@@ -28,7 +28,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
 	add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-O2>")
 	add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
-	add_compile_options(-fvisibility=hidden -pthread -msse2)
+	add_compile_options(-fvisibility=hidden -pthread)
 	# Uncomment for profiling
 	#add_compile_options(-pg)
 	#add_link_options(-pg)
