@@ -20,7 +20,7 @@ set(CMAKE_CXX_EXTENSIONS NO)
 #########################################################
 # change this to your Halide install location if necessary
 #set(CMAKE_PREFIX_PATH "/opt/Halide-19.0.0-x86-64-linux")
-find_package(Halide 19 REQUIRED)
+find_package(Halide 21 REQUIRED)
 
 #########################################################
 # Include directories
@@ -38,7 +38,7 @@ if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 else()
 	add_compile_options("$<$<NOT:$<CONFIG:Debug>>:-O2>")
 	add_compile_options(-std=c++17 -Wall -Wextra -pedantic)
-	add_compile_options(-fvisibility=hidden -pthread -msse2)
+	add_compile_options(-fvisibility=hidden -pthread)
 	# Uncomment for profiling
 	#add_compile_options(-pg)
 	#add_link_options(-pg)

@@ -7,6 +7,8 @@
 #include <iomanip>
 #include <opencv2/opencv.hpp>
 #include <opencv2/stereo.hpp>
+#include <opencv2/xstereo/quasi_dense_stereo.hpp>
+
 #include "menu.hpp"
 
 using namespace cv;

@@ -23,6 +23,8 @@ int main(int argc, char** argv) {
     "sheep", "sofa", "train", "tvmonitor"};
 
     dnn::Net net = dnn::readNetFromTensorflow(DEEPLABV3);
+    net.setPreferableBackend(cv::dnn::DNN_BACKEND_OPENCV);
+    net.setPreferableTarget(cv::dnn::DNN_TARGET_OPENCL);
 
     Mat image;
     VideoCapture cap;
