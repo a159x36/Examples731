@@ -1,16 +1,18 @@
 
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.26)
 
 project("159731_Project" CXX C)
-
-# Enable IDE Project Folders
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 #########################################################
 # Find OpenCV
 #########################################################
+# Try to find Major version 5 first
+find_package(OpenCV 5 QUIET)
 
-find_package(OpenCV REQUIRED)
+# If version 5 isn't found, fall back to version 4.8
+if(NOT OpenCV_FOUND)
+    find_package(OpenCV 4.8 REQUIRED)
+endif()
 
 #########################################################
 # Include directories

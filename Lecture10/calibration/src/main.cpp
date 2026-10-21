@@ -6,7 +6,9 @@
 #include <fstream>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#if CV_VERSION_MAJOR>4
 #include <opencv2/geometry.hpp>
+#endif
 #include "menu.hpp"
 
 using namespace cv;
