@@ -5,8 +5,9 @@
 #include <iostream>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#if CV_VERSION_MAJOR>4
 #include <opencv2/geometry.hpp>
-
+#endif
 using namespace cv;
 using namespace std;
 using namespace chrono;

@@ -5,13 +5,14 @@
 #include <iostream>
 #include <iomanip>
 #include <opencv2/opencv.hpp>
+#if CV_VERSION_MAJOR>4
 #include <opencv2/geometry.hpp>
-
+#endif
 using namespace cv;
 using namespace std;
 using namespace chrono;
 
-#include "menu.hpp" 
+#include "menu.hpp"
 
 void showinwindow(string windowname,Mat im) {
     namedWindow(windowname, WINDOW_NORMAL);
@@ -23,11 +24,10 @@ void showinwindow(string windowname,Mat im) {
 }
 
 void hdr_process(string normalname, string undername,string overname) {
-    
+
     Mat_<Vec3b> normal=imread("../../"+normalname);
     Mat_<Vec3b> over=imread("../../"+overname);
     Mat_<Vec3b> under=imread("../../"+undername);
-    
 
     cout<<"Images Read"<<endl;
 
