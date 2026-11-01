@@ -3,7 +3,7 @@
 # Source Files
 #########################################################
 
-SET(sources	"main.cpp")
+file(GLOB sources "*.cpp")
 
 add_executable(main ${sources})
 

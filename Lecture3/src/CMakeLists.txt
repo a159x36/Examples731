@@ -3,9 +3,9 @@
 # Source Files
 #########################################################
 
-SET(sources	"camera_with_fps.cpp")
+file(GLOB sources "*.cpp")
 
-add_executable(camera_with_fps ${sources})
+add_executable(main ${sources})
 
 # Link with OpenCV Library
-target_link_libraries(camera_with_fps PRIVATE ${OpenCV_LIBS})
+target_link_libraries(main PRIVATE ${OpenCV_LIBS})
