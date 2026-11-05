@@ -35,7 +35,7 @@ int main(int argc, char** argv) {
     string PATH="../../data/";
     string DEEPLABV3=PATH+"opt_deeplabv3_mnv2_513.pb";
     string YOLO26=PATH+"yolo26n-seg.onnx";
-    string RFDETR=PATH+"rf_detr_seg.onnx";
+    string RFDETR=PATH+"rf_detr_seg_fp16.onnx";
 
     Model* model;
 
