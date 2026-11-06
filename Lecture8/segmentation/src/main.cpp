@@ -30,7 +30,7 @@ using namespace std;
 using namespace chrono;
 
 
-int main(int argc, char** argv) {
+int main() {
 
     string PATH="../../data/";
     string DEEPLABV3=PATH+"opt_deeplabv3_mnv2_513.pb";
@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
 
     Menu m("Segmentation",{"DeeplabV3","Yolo26","RFDetr","Exit"});
     
-    m.setselected(0);
+    m.setselected(2);
     string choice="";
 
     Mat image;

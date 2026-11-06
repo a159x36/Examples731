@@ -34,7 +34,6 @@ class Menu {
     }
     static void onmouse(int event, int , int y, int , void *userdata) {
         Menu *m=(Menu *)userdata;
-        cout<<"Mouse event: "<<event<<" at y="<<y<<endl;
         if(event==EVENT_MOUSEMOVE) m->sethighlighted(y/32);
         if(event==EVENT_LBUTTONDOWN) m->setselected(y/32);
         m->drawmenu();
